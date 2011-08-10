@@ -70,8 +70,8 @@ spamflagscmd="+FLAGS.SILENT"
 spamflags="("
 # include the spamassassin report in the message placed in spaminbox
 increport=1
-# delete messages with a score higher then this
-deletehigherthen=0
+# delete messages with a score higher than this
+deletehigherthan=0
 # expunge before quiting causing all messages marked for deletion
 # to actually be deleted
 expunge=0
@@ -132,14 +132,14 @@ All options are optional (\o/), default are between brackets
                         copied to your spam folder
   --flag                The spams will be flagged in your inbox
   --delete              The spams will be marked for deletion from your inbox
-  --deletehigherthen #  Delete any spam with a score higher then #
+  --deletehigherthan #  Delete any spam with a score higher than #
   --expunge             Cause marked for deletion messages to also be deleted
                         (only useful if --delete is specified)
   --verbose             Show IMAP stuff happening
   --spamc               Use spamc instead of standalone SpamAssassin binary
   --savepw              Store the password to be used in future runs
   --noninteractive      Prevent interactive requests
-  --ignorelockfile      Don't stop is lock file is present
+  --ignorelockfile      Don't stop if lock file is present
   --nostats             Don't print stats
   --exitcodes           Use different exitcodes (see doc)
 
@@ -170,7 +170,7 @@ def hexdigit(c):
         return 10+ord(c)-ord('a')
     if c>='A' and c<='F':
         return 10+ord(c)-ord('A')
-    raise ValueError(`c`+"is not a valid hexadecimal digit")
+    raise ValueError(`c`+" is not a valid hexadecimal digit")
 
 def dehexof(x):
     res=""
@@ -182,7 +182,7 @@ def dehexof(x):
 
 # argument processing
 longopts=[ "imaphost=", "imapuser=", "imapinbox=", "spaminbox=",
-       "maxsize=", "noreport", "flag", "delete", "deletehigherthen=",
+       "maxsize=", "noreport", "flag", "delete", "deletehigherthan=",
        "expunge", "verbose", "trackfile=", "spamc", "ssl", "savepw",
        "nostats", "exitcodes", "learnhambox=", "movehamto=",
        "learnspambox=", "teachonly", "learnthendestroy", "noninteractive",
@@ -195,26 +195,26 @@ longopts=[ "imaphost=", "imapuser=", "imapinbox=", "spaminbox=",
 try:
     opts, pargs=getopt.getopt(sys.argv[1:], None, longopts)
 except Exception,e:
-    errorexit("option processing failed - "+str(e))
+    errorexit("Option processing failed - "+str(e))
 
 if len(pargs):
-    errorexit("unrecognised option(s) - "+`pargs`)
+    errorexit("Unrecognised option(s) - "+`pargs`)
 
 for p in opts:
     if p[0]=="--maxsize":
         try:
             thresholdsize=int(p[1])
         except:
-            errorexit("Unrecognized size - "+p[1])
+            errorexit("Unrecognised size - "+p[1])
         if thresholdsize<1:
             errorexit("Size "+`thresholdsize`+" is too small")
-    elif p[0]=="--deletehigherthen":
+    elif p[0]=="--deletehigherthan":
         try:
-            deletehigherthen=float(p[1])
+            deletehigherthan=float(p[1])
         except:
-            errorexit("Unrecognized score - "+p[1])
-        if deletehigherthen<1:
-            errorexit("Score "+`deletehigherthen`+" is too small")
+            errorexit("Unrecognised score - "+p[1])
+        if deletehigherthan<1:
+            errorexit("Score "+`deletehigherthan`+" is too small")
     elif p[0]=="--imapport":
         imapport=int(p[1])
     elif p[0]=="--noreport":
@@ -297,10 +297,10 @@ def getpw(data,hash):
             break
         res=res+chr(c)
     return res
-        
+
 def setpw(pw, hash):
     if len(pw)>passwordhashlen:
-        raise ValueError("password of length %d is too long to store (max accepted is %d)" % (len(pw), passwordhashlen))
+        raise ValueError("Password of length %d is too long to store (max accepted is %d)" % (len(pw), passwordhashlen))
     res=list(hash)
     for i in range(0, len(pw)):
         res[i]=chr( ord(res[i]) ^ ord(pw[i]) )
@@ -332,7 +332,7 @@ if verbose:
     print "Trackfile is", pastuidsfile
     print "SpamFlags are", spamflags
     print "Password file is", passwordfilename
- 
+
 # Acquirelockfilename or exit
 if ignorelockfile:
   if verbose:
@@ -355,7 +355,7 @@ if imappassword is None:
             if verbose: print "Successfully read password file"
         except:
             pass
-        
+
     # do we have to prompt?
     if imappassword is None:
         if not interactive:
@@ -383,7 +383,7 @@ def getmessage(uid, append_to=None):
         except:
             if verbose:
                 print "Confused - rfc822 fetch gave "+`res`
-                print "The message was probably deleted while we are running"
+                print "The message was probably deleted while we were running"
             if append_to:
                 append_to.append(uid)
     else:
@@ -435,7 +435,7 @@ if learnspambox:
         continue
       code = p.returncode
       if code == 69 or code == 74:
-        errorexit("spamd is missconfigured (use --allow-tell)")
+        errorexit("spamd is misconfigured (use --allow-tell)")
       p.stdin.close()
       if not out.strip() == alreadylearnt: s_learnt += 1
       if verbose: print u, out
@@ -502,7 +502,7 @@ if not teachonly:
     pass
   # remember what pastuids looked like so that we can compare at the end
   origpastuids=pastuids[:]
-  
+
   # filter away uids that was previously scanned
   uids = [u for u in inboxuids if u not in pastuids]
 
@@ -539,10 +539,10 @@ for u in uids:
         # Message is spam
         if verbose: print u, "is spam"
 
-        if deletehigherthen and float(score.split('/')[0]) > deletehigherthen:
+        if deletehigherthan and float(score.split('/')[0]) > deletehigherthan:
           spamdeletelist.append(u)
           continue
-        
+
         # do we want to include the spam report
         if increport:
             # filter it through sa
@@ -617,7 +617,7 @@ if stats:
     print "%d/%d hams learnt" % (h_learnt, h_tolearn)
   if not teachonly:
     print "%d spams found in %d messages" % (numspam, nummsg)
-    print "%d/%d was automaticaly deleted" % (spamdeleted, numspam)
+    print "%d/%d was automatically deleted" % (spamdeleted, numspam)
 
 if exitcodes and nummsg:
     res=0
